@@ -22,23 +22,28 @@ const register = async (req, res) => {
     })
 }
 const login = async (req, res) => {
-    const { email, password } = req.body
-    const existingUser = await authModel.findOne({ email })
-    if (!existingUser) {
-        return res.status(404).json({
-            msg: 'Email is not found, Please create account first'
+    try {
+        const { email, password } = req.body
+        const existingUser = await authModel.findOne({ email })
+        if (!existingUser) {
+            return res.status(404).json({
+                msg: 'Email is not found, Please create account first'
+            })
+        }
+        const matchedPassword = await bcrypt.compare(password, existingUser.password)
+        if (!matchedPassword) {
+            return res.status(400).json({
+                msg: 'Invalid Email or Password'
+            })
+        }
+        res.status(200).json({
+            msg: 'User Logged In',
+            user: existingUser
         })
+    } catch (err) {
+        console.error('LOGIN ERROR:', err)
+        res.status(500).json({ msg: 'Server error', error: err.message })
     }
-    const matchedPassword = await bcrypt.compare(password, existingUser.password)
-    if (!matchedPassword) {
-        return res.status(400).json({
-            msg: 'Invalid Email or Password'
-        })
-    }
-    res.status(200).json({
-        msg: 'User Logged In',
-        user: existingUser
-    })
 }
 
 module.exports = { register, login }
